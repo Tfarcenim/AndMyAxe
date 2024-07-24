@@ -13,41 +13,58 @@
  */
 package net.mcreator.andmyaxe;
 
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
-import net.minecraftforge.network.simple.SimpleChannel;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.IEventBus;
-
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.FriendlyByteBuf;
-
-import java.util.function.Supplier;
-import java.util.function.Function;
-import java.util.function.BiConsumer;
 
 @Mod(AndMyAxeMod.MODID)
 public class AndMyAxeMod {
 	public static final Logger LOGGER = LogManager.getLogger(AndMyAxeMod.class);
 	public static final String MODID = "and_my_axe";
-	private static final String PROTOCOL_VERSION = "1";
-	public static final SimpleChannel PACKET_HANDLER = NetworkRegistry.newSimpleChannel(new ResourceLocation(MODID, MODID), () -> PROTOCOL_VERSION,
-			PROTOCOL_VERSION::equals, PROTOCOL_VERSION::equals);
-	private static int messageID = 0;
 
-	public AndMyAxeMod() {
-
+    public AndMyAxeMod() {
 		IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
-
+		MinecraftForge.EVENT_BUS.addListener(this::onBreakSpeed);
+		MinecraftForge.EVENT_BUS.addListener(this::clientTick);
 	}
 
-	public static <T> void addNetworkMessage(Class<T> messageType, BiConsumer<T, FriendlyByteBuf> encoder, Function<FriendlyByteBuf, T> decoder,
-			BiConsumer<T, Supplier<NetworkEvent.Context>> messageConsumer) {
-		PACKET_HANDLER.registerMessage(messageID, messageType, encoder, decoder, messageConsumer);
-		messageID++;
+	private void onBreakSpeed(PlayerEvent.BreakSpeed event) {
+		Player player = event.getPlayer();
+		BlockState state = event.getState();
+
+		Level level = player.level;
+		if (level.isClientSide) {
+			if (event.getNewSpeed() <= 1) {
+				boolean found = false;
+				for (int i = 0;i < 9;i++) {
+					ItemStack potentialTool = player.getInventory().getItem(i);
+					if (potentialTool.getDestroySpeed(state) > 1) {
+						player.getInventory().selected = i;
+						found = true;
+						break;
+					}
+				}
+				if (!found) {
+
+				}
+			}
+		}
+	}
+
+	static boolean needsSwap;
+	static int swapTo;
+
+	private void clientTick(TickEvent.ClientTickEvent event) {
+
 	}
 }
