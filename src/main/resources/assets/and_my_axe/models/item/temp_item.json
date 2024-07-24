@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "and_my_axe:items/tempitem"
+  }
+}
